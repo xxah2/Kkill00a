@@ -1,58 +1,48 @@
--- STEAL A BRAINROT EXPLOIT V1 by Ale & GPT
--- Ejecútalo en Synapse/KRNL/Fluxus
 
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local Workspace = game:GetService("Workspace")
-local UIS = game:GetService("UserInputService")
-local LocalPlayer = Players.LocalPlayer
-
--- 🧠 Crear UI de botones
+--// GUI con botones flotantes para Noclip y ESP
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-local MainBtn = Instance.new("TextButton", ScreenGui)
-MainBtn.Size = UDim2.new(0, 160, 0, 40)
-MainBtn.Position = UDim2.new(0, 20, 0, 100)
-MainBtn.Text = "🧠 IR A BRAINROT"
-MainBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 200)
-MainBtn.TextColor3 = Color3.new(1, 1, 1)
-MainBtn.TextSize = 20
-MainBtn.Font = Enum.Font.SourceSansBold
-MainBtn.Active = true
-MainBtn.Draggable = true
+local Frame = Instance.new("Frame", ScreenGui)
+local NoclipBtn = Instance.new("TextButton", Frame)
+local ESPBtn = Instance.new("TextButton", Frame)
 
-local ESPEnabled = true
-local NoclipEnabled = true
+-- GUI Config
+ScreenGui.Name = "BrainrotHackGui"
+Frame.Size = UDim2.new(0, 150, 0, 120)
+Frame.Position = UDim2.new(0, 100, 0, 100)
+Frame.BackgroundTransparency = 0.3
+Frame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+Frame.Active = true
+Frame.Draggable = true
 
--- 🧠 FUNC: Teleport a Brainrot (o al jugador que lo tiene)
-local function gotoBrainrot()
-    local brainrot = nil
+-- Noclip Button
+NoclipBtn.Size = UDim2.new(1, 0, 0, 50)
+NoclipBtn.Position = UDim2.new(0, 0, 0, 0)
+NoclipBtn.Text = "🌟 Noclip ON/OFF"
+NoclipBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+NoclipBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-    -- Buscar el Brainrot suelto
-    brainrot = Workspace:FindFirstChild("Brainrot") or Workspace:FindFirstChildWhichIsA("Tool")
-    
-    -- Si no está suelto, buscar quién lo tiene
-    if not brainrot then
-        for _, p in pairs(Players:GetPlayers()) do
-            if p.Character and p.Character:FindFirstChild("Brainrot") then
-                brainrot = p.Character:FindFirstChild("Brainrot")
-                break
-            end
-        end
-    end
+-- ESP Button
+ESPBtn.Size = UDim2.new(1, 0, 0, 50)
+ESPBtn.Position = UDim2.new(0, 0, 0, 60)
+ESPBtn.Text = "👁 ESP ON/OFF"
+ESPBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+ESPBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-    if brainrot and brainrot:IsDescendantOf(Workspace) then
-        local handle = brainrot:FindFirstChild("Handle") or brainrot:FindFirstChildWhichIsA("BasePart")
-        if handle and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            LocalPlayer.Character.HumanoidRootPart.CFrame = handle.CFrame + Vector3.new(0, 1, 0)
-        end
-    end
+-- // Noclip Funcional
+local noclip = false
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+local function toggleNoclip()
+    noclip = not noclip
+    NoclipBtn.Text = noclip and "✅ Noclip: ON" or "🌟 Noclip: OFF"
 end
 
-MainBtn.MouseButton1Click:Connect(gotoBrainrot)
+NoclipBtn.MouseButton1Click:Connect(toggleNoclip)
 
--- 🧱 Noclip Activado
 RunService.Stepped:Connect(function()
-    if NoclipEnabled and LocalPlayer.Character then
+    if noclip and LocalPlayer.Character then
         for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
             if part:IsA("BasePart") then
                 part.CanCollide = false
@@ -61,38 +51,71 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- 👁️ ESP Brainrot
-local billboard = nil
-RunService.RenderStepped:Connect(function()
-    if not ESPEnabled then return end
+-- // ESP Funcional
+local espEnabled = false
+local drawings = {}
 
-    local brainrot = Workspace:FindFirstChild("Brainrot") or Workspace:FindFirstChildWhichIsA("Tool")
-    if not brainrot then
-        for _, p in pairs(Players:GetPlayers()) do
-            if p.Character and p.Character:FindFirstChild("Brainrot") then
-                brainrot = p.Character:FindFirstChild("Brainrot")
-                break
+local function createESP(player)
+    local box = Drawing.new("Text")
+    box.Text = player.Name
+    box.Size = 13
+    box.Center = true
+    box.Outline = true
+    box.Color = Color3.fromRGB(0, 255, 0)
+    box.Visible = true
+    box.Transparency = 1
+
+    drawings[player] = box
+end
+
+local function removeESP(player)
+    if drawings[player] then
+        drawings[player]:Remove()
+        drawings[player] = nil
+    end
+end
+
+local function toggleESP()
+    espEnabled = not espEnabled
+    ESPBtn.Text = espEnabled and "✅ ESP: ON" or "👁 ESP: OFF"
+
+    if not espEnabled then
+        for _, d in pairs(drawings) do
+            d:Remove()
+        end
+        drawings = {}
+    else
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer then
+                createESP(player)
             end
         end
     end
+end
 
-    if brainrot then
-        local targetPart = brainrot:FindFirstChild("Handle") or brainrot:FindFirstChildWhichIsA("BasePart")
-        if targetPart and not billboard then
-            billboard = Instance.new("BillboardGui", targetPart)
-            billboard.Size = UDim2.new(0, 100, 0, 40)
-            billboard.AlwaysOnTop = true
+ESPBtn.MouseButton1Click:Connect(toggleESP)
 
-            local label = Instance.new("TextLabel", billboard)
-            label.Size = UDim2.new(1, 0, 1, 0)
-            label.Text = "🧠 BRAINROT!"
-            label.TextColor3 = Color3.fromRGB(255, 0, 0)
-            label.BackgroundTransparency = 1
-            label.TextScaled = true
-            label.Font = Enum.Font.SourceSansBold
+RunService.RenderStepped:Connect(function()
+    if espEnabled then
+        for player, drawing in pairs(drawings) do
+            local char = player.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local pos, onscreen = workspace.CurrentCamera:WorldToViewportPoint(char.HumanoidRootPart.Position)
+                drawing.Position = Vector2.new(pos.X, pos.Y)
+                drawing.Visible = onscreen
+            else
+                drawing.Visible = false
+            end
         end
-    elseif billboard then
-        billboard:Destroy()
-        billboard = nil
     end
+end)
+
+Players.PlayerAdded:Connect(function(player)
+    if espEnabled and player ~= LocalPlayer then
+        createESP(player)
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    removeESP(player)
 end)
